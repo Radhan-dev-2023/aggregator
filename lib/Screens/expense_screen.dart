@@ -414,9 +414,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                           ),
                           margin: const EdgeInsets.all(12),
                           child: ListTile(
-                            leading: Icon(
-                              provider.categoryIcons[transaction.category]?.icon ?? Icons.other_houses_outlined,
-                            ),
+                            leading: provider.getLeadingIcon(transaction.category, provider.categoryIcons),
                             title: Text(
                               "${transaction.narration}",
                               style: style,
@@ -507,7 +505,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                     const SizedBox(
                       height: 12,
                     ),
-                  ] else ...[
+                  ]
+                  else ...[
                     Column(
                       children: [
                         const SizedBox(height: 300),

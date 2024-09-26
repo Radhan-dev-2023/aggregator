@@ -18,16 +18,17 @@ Future<void> main() async {
   Hive.registerAdapter(BankAdapter());
   Hive.registerAdapter(CustomerInfoAdapter());
   Hive.registerAdapter(HolderAdapter());
-  Hive.registerAdapter(DailyOpenCloseBalanceAdapter());
-  Hive.registerAdapter(DailyBalanceAdapter());
-  Hive.registerAdapter(FraudAnalysisAdapter());
-  Hive.registerAdapter(RawDatumAdapter());
-  Hive.registerAdapter(PendingAdapter());
-  Hive.registerAdapter(FraudAnalysisTransactionAdapter());
-  Hive.registerAdapter(LoanAnalysisAdapter());
-  Hive.registerAdapter(LevelSummaryVarAdapter());
-  Hive.registerAdapter(RecurrentCrRecurrentTransactionAdapter());
   Hive.registerAdapter(AccountTransactionAdapter());
+  // Hive.registerAdapter(DailyOpenCloseBalanceAdapter());
+  // Hive.registerAdapter(DailyBalanceAdapter());
+  // Hive.registerAdapter(FraudAnalysisAdapter());
+  // Hive.registerAdapter(RawDatumAdapter());
+  // Hive.registerAdapter(PendingAdapter());
+  // Hive.registerAdapter(FraudAnalysisTransactionAdapter());
+  // Hive.registerAdapter(LoanAnalysisAdapter());
+  // Hive.registerAdapter(LevelSummaryVarAdapter());
+  // Hive.registerAdapter(RecurrentCrRecurrentTransactionAdapter());
+
 
   runApp(
     MultiProvider(
@@ -41,7 +42,6 @@ Future<void> main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

@@ -7,7 +7,8 @@ import 'package:aggregator/Screens/web_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../Model/report.dart';
+import '../Helpers/colors.dart';
+
 
 class MobileNumberEntry extends StatefulWidget {
   const MobileNumberEntry({super.key});
@@ -66,7 +67,7 @@ class _MobileNumberEntryState extends State<MobileNumberEntry> {
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
               child: Container(
-                color: Colors.black.withOpacity(0.1),
+                color:black.withOpacity(0.1),
               ),
             ),
             Padding(
@@ -97,7 +98,7 @@ class _MobileNumberEntryState extends State<MobileNumberEntry> {
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: black.withOpacity(0.1),
                                   blurRadius: 10,
                                   offset: const Offset(0, 5),
                                 ),
@@ -110,26 +111,26 @@ class _MobileNumberEntryState extends State<MobileNumberEntry> {
                                   controller: out,
                                   decoration: InputDecoration(
                                     filled: true,
-                                    fillColor: Colors.white,
-                                    focusColor: Colors.white,
+                                    fillColor: white,
+                                    focusColor: white,
                                     focusedBorder: OutlineInputBorder(
-                                      borderSide: const BorderSide(
-                                          color: Colors.black, width: 2.0),
+                                      borderSide:  BorderSide(
+                                          color: black, width: 2.0),
                                       borderRadius: BorderRadius.circular(30),
                                     ),
                                     border: OutlineInputBorder(
-                                      borderSide: const BorderSide(
-                                          color: Colors.black, width: 2.0),
+                                      borderSide:  BorderSide(
+                                          color: black, width: 2.0),
                                       borderRadius: BorderRadius.circular(30),
                                     ),
                                     enabledBorder: OutlineInputBorder(
-                                      borderSide: const BorderSide(
-                                          color: Colors.black, width: 2.0),
+                                      borderSide:  BorderSide(
+                                          color: black, width: 2.0),
                                       borderRadius: BorderRadius.circular(30),
                                     ),
                                     hintText: 'Phone Number',
                                     hintStyle:
-                                        const TextStyle(color: Colors.grey),
+                                         TextStyle(color: grey),
                                   ),
                                 ),
                               ],
@@ -147,26 +148,20 @@ class _MobileNumberEntryState extends State<MobileNumberEntry> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              // onPressed: (){
-                              //   Navigator.push(
-                              //     context,
-                              //     MaterialPageRoute(builder: (context) => MyCardsScreen()),
-                              //   );
-                              // },
                               onPressed: _isLoading ? null : _sendSms,
                               child: _isLoading
-                                  ? const SizedBox(
+                                  ?  SizedBox(
                                       height: 20,
                                       width: 20,
                                       child: CircularProgressIndicator(
-                                        color: Colors.white,
+                                        color: white,
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text(
+                                  :  Text(
                                       "SEND SMS",
                                       style: TextStyle(
-                                          color: Colors.white, fontSize: 17),
+                                          color: white, fontSize: 17),
                                     ),
                             ),
                           ),

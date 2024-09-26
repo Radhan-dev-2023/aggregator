@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:aggregator/Screens/provider_class.dart';
 import 'package:easy_pie_chart/easy_pie_chart.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,6 +8,7 @@ import 'package:month_picker_dialog/month_picker_dialog.dart';
 import 'package:provider/provider.dart';
 import '../Helpers/colors.dart';
 import '../Helpers/snackBar.dart';
+import '../Model/report.dart';
 import '../widgets/custom_container.dart';
 import 'analytics_screen.dart';
 
@@ -24,18 +24,10 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
   DateTime? selectedDate;
   TextEditingController dateFromController = TextEditingController();
   TextEditingController dateToController = TextEditingController();
-
-  String? selectedCategory;
   TextEditingController dateController = TextEditingController();
   int? touchedIndex;
   Offset? touchedPosition;
-
-  void onChartTap(int index, Offset position) {
-    setState(() {
-      touchedIndex = index;
-      touchedPosition = position;
-    });
-  }
+  int? selectedBankIndex=0;
 
   @override
   void initState() {
@@ -43,8 +35,29 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
     _dateTime = DateTime.now();
     dateController.text = DateFormat('MMMM d').format(_dateTime);
     final provider = Provider.of<TransactionProvider>(context, listen: false);
-    provider.transactionFilter();
+    int bankIndex = 0;
+    provider.transactionFilter(bankIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      pickedDate(
+        context,
+        Provider.of<TransactionProvider>(context, listen: false),
+        true,
+      );
+    });
   }
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _dateTime = DateTime.now();
+  //   dateController.text = DateFormat('MMMM d').format(_dateTime);
+  //
+  //   // Delaying the provider call until after the first frame is built
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     final provider = Provider.of<TransactionProvider>(context, listen: false);
+  //     provider.transactionFilter();
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +65,20 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
         fontWeight: FontWeight.bold,
         color: Color.fromRGBO(24, 24, 24, 1),
         fontSize: 16);
+
     var styles = const TextStyle(
         fontWeight: FontWeight.bold,
         color: Color.fromRGBO(24, 24, 24, 1),
         fontSize: 10);
+
+    List<Color> cardColors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.red,
+    ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -72,111 +95,111 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
           SizedBox(width: 16),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Consumer<TransactionProvider>(
-          builder: (context, provider, child) {
-            if (provider.isReportLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-            /*if (provider.showTimer) {
-              return Scaffold(
-                body: Center(
-                  child: Text(
-                    'Please wait... ${provider.timerSeconds} seconds',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              );
-            }
-            if (provider.isProcessing) {
-              return const Scaffold(
-                body: Center(
-                  child: Text(
-                    "IT WILL TAKE SOME TIME",
-                    style: TextStyle(
-                      fontSize: 40,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              );
-            }
-            if (provider.reportDataModel.reportData == null ||
-                provider.reportDataModel.reportData?.banks?[0].accounts?[0]
-                        .accountNumber ==
-                    null ||
-                provider.reportDataModel.reportData?.banks == null) {
-              return const  Center(
-                  child: Text(
-                    "No data available,Complete the Digitap Verification",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-            }*/
-            else {
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
+      body: Consumer<TransactionProvider>(
+        builder: (context, provider, child) {
+          if (provider.isReportLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'My Banks',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: black,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      textAlign: TextAlign.start,
+                      'My Banks',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: black,
                       ),
                     ),
+                    const SizedBox(height: 8),
                     SizedBox(
-                        height: 150,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: provider
-                                  .reportDataModel.reportData?.banks?.length ??
-                              0,
-                          itemBuilder: (context, index) {
-                            final bank = provider
-                                .reportDataModel.reportData?.banks?[index];
-                            final account = bank?.accounts?[index];
+                      height: 200,
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                        itemCount: provider
+                                .reportDataModel.reportData?.banks?.length ??
+                            0,
+                        itemBuilder: (context, bankIndex) {
+                          final bank = provider
+                              .reportDataModel.reportData?.banks?[bankIndex];
 
-                            if (bank == null || account == null) {
-                              return const Text("null");
-                            }
-
-                            return CardWidget(
-                              bankName: "${bank.bank}",
-                              cardNumber: account.accountNumber ?? "",
-                              cardHolder: (account.currentBalance != null &&
-                                      account.currentBalance!.isNotEmpty)
-                                  ? "${account.currentBalance}"
-                                  : "NOT AVAILABLE",
-                              expiryDate: "${account.accountStatus}",
-                              currency: (account.currency != null &&
-                                      account.currency!.isNotEmpty)
-                                  ? "CURRENCY${account.currency}"
-                                  : "₹",
-                              color: const Color.fromRGBO(241, 139, 230, 1),
+                          if (bank == null || bank.accounts == null) {
+                            return const SizedBox(
+                              width: 100,
+                              child:
+                                  Center(child: Text("No accounts available")),
                             );
-                          },
-                        )),
+                          } else {
+                            final random = Random();
+                            final randomColor =
+                                cardColors[random.nextInt(cardColors.length)];
+                            return Container(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              padding: const EdgeInsets.all(4.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.vertical,
+                                      itemCount: bank.accounts?.length ?? 0,
+                                      itemBuilder: (context, accountIndex) {
+                                        final account =
+                                            bank.accounts?[accountIndex];
+                                        if (account == null) {
+                                          return Text(
+                                            bank.bank ?? "Unknown Bank",
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          );
+                                        } else {
+                                          return InkWell(
+                                            onTap: () {
+                                              provider.transactionFilter(bankIndex);
+                                              showAlertDialog(context, bank);
+                                            },
+                                            child: CardWidget(
+                                                bankName:
+                                                    bank.bank ?? "Unknown Bank",
+                                                cardNumber:
+                                                    account.accountNumber ??
+                                                        "N/A",
+                                                cardHolder: (account
+                                                                .currentBalance !=
+                                                            null &&
+                                                        account.currentBalance!
+                                                            .isNotEmpty)
+                                                    ? "${account.currentBalance}"
+                                                    : "NOT AVAILABLE",
+                                                expiryDate:
+                                                    account.accountStatus ??
+                                                        "Unknown Status",
+                                                currency: (account.currency !=
+                                                            null &&
+                                                        account.currency!
+                                                            .isNotEmpty)
+                                                    ? "${account.currency}"
+                                                    : "INR",
+                                                color: randomColor),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
                     SizedBox(height: MediaQuery.of(context).size.height * 0.05),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -243,7 +266,10 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                         decoration: InputDecoration(
                           prefixIcon: InkWell(
                             onTap: () {
-                              pickedDate(context, provider);
+                              if(selectedBankIndex!=null){
+                                pickedDate(context, provider);
+                              }
+
                             },
                             child: Icon(Icons.arrow_drop_down_circle_outlined,
                                 color: greenColor),
@@ -438,17 +464,17 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                       ),
                     ),
                     SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.02,
+                      height: MediaQuery.of(context).size.height * 0.05,
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           "Transactions",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: black,
                           ),
                         ),
                         InkWell(
@@ -496,13 +522,12 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                               'transaction_timestamp':
                                   transaction.transactionTimestamp ?? '',
                             };
-
                             return Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
                                 color: randomColor,
                                 border: Border.all(
-                                  color: Colors.black,
+                                  color: black,
                                   width: 2,
                                 ),
                                 borderRadius: const BorderRadius.only(
@@ -511,8 +536,7 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                               ),
                               margin: const EdgeInsets.all(12),
                               child: ListTile(
-                                leading: provider.categoryIcons[
-                                    transaction.category ?? 'Others'],
+                                leading: provider.getLeadingIcon(transaction.category, provider.categoryIcons),
                                 title: Text(
                                   "${transaction.narration}",
                                   maxLines: 1,
@@ -530,8 +554,8 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                         color: (transaction.amount ?? 0) < 0
-                                            ? Colors.red
-                                            : Colors.green,
+                                            ? red
+                                            : green,
                                       ),
                                     ),
                                     Container(
@@ -578,8 +602,8 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                                     Text(
                                       DateFormat('dd-MM-yyyy')
                                           .format(transaction!.date!),
-                                      style: const TextStyle(
-                                          color: Colors.indigoAccent,
+                                      style: TextStyle(
+                                          color: indigoAccent,
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -591,13 +615,13 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                         ),
                       )
                     else ...[
-                      const Center(
+                      Center(
                         child: Text(
                           "No Transactions available for this month",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.red,
+                            color: red,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -605,10 +629,10 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                     ]
                   ],
                 ),
-              );
-            }
-          },
-        ),
+              ),
+            );
+          }
+        },
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -909,32 +933,41 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
     );
   }
 
-  pickedDate(BuildContext context, TransactionProvider provider) async {
-    DateTime startDate = DateTime(2023, 5, 1);
-    DateTime? date = await showMonthPicker(
-      context: context,
-      initialDate: provider.dateTime,
-      /* provider.reportDataModel.reportData?.banks?.first.accounts
-                ?.first.transactionStartDate ??
-            DateTime.now(),*/
-      firstDate: provider.reportDataModel.reportData?.banks?.first.accounts
-              ?.first.transactionStartDate ??
-          DateTime.now(),
-      lastDate: provider.reportDataModel.reportData?.banks?.first.accounts
-              ?.first.transactionEndDate ??
-          DateTime.now(),
-    );
 
-    if (date != null) {
-      provider.setIncomeExpense(date);
-      // provider.applyFilter();
-      dateController.text = DateFormat('MMMM yyyy').format(date);
+  pickedDate(BuildContext context, TransactionProvider provider,
+      [bool isFromInitialStart = false]) async {
+    // DateTime startDate = DateTime(2023, 5, 1);
+
+    DateTime? date;
+
+    if (isFromInitialStart) {
+      date = DateTime.now();
+    } else {
+      date = await showMonthPicker(
+        context: context,
+        initialDate:/* DateTime.now(),*/
+         provider.reportDataModel.reportData?.banks?.first.accounts
+                ?.first.transactionStartDate ??
+            DateTime.now(),
+        firstDate: provider.reportDataModel.reportData?.banks?.first.accounts
+            ?.first.transactionStartDate ??
+            DateTime.now(),
+        lastDate: provider.reportDataModel.reportData?.banks?.first.accounts
+            ?.first.transactionEndDate ??
+            DateTime.now(),
+      );
     }
 
-    setState(() {
-      touchedIndex = null;
-      touchedPosition = null;
-    });
+    if (date != null) {
+      // dateController.text = DateFormat('yyyy-MM-dd').format(date);
+      dateController.text = DateFormat('MMMM yyyy').format(date);
+      provider.setIncomeExpense(date);
+      // provider.setCategoryDatasExpense(date);
+    }
+    // setState(() {
+    //   touchedIndex = null;
+    //   touchedPosition = null;
+    // });
   }
 
   void _showTransactionDetails(
@@ -1029,11 +1062,11 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: const Text(
+                        child: Text(
                           'CLOSE',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: white,
                           ),
                         ),
                       ),
@@ -1047,4 +1080,35 @@ class _RetrieveReportScreenState extends State<RetrieveReportScreen> {
       },
     );
   }
+
+  void showAlertDialog(BuildContext context, Bank account) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Bank Details",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 22,color: black),),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text("You have choose ${account.bank ?? 'Unknown Bank'}",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16,color: black)),
+                 const SizedBox(height: 20,),
+                 Text("Please Choose the DATE to Categorize your INCOME & EXPENSE",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 14,color: brown),)
+
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue),),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 }

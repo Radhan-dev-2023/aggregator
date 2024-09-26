@@ -488,13 +488,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                   ),
                                   margin: const EdgeInsets.all(12),
                                   child: ListTile(
-                                    leading: Icon(
-                                      provider
-                                              .categoryIcons[
-                                                  transaction.category]
-                                              ?.icon ??
-                                          Icons.other_houses_outlined,
-                                    ),
+                                    leading: provider.getLeadingIcon(transaction.category, provider.categoryIcons),
                                     title: Text(
                                       "${transaction.narration}",
                                       style: style,
@@ -741,119 +735,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
 
 
-  void _showTransactionDetails(
-    BuildContext context,
-    AccountTransaction transaction,
-    TransactionProvider transactionProvider,
-  ) {
-    showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      builder: (BuildContext context) {
 
-        DateTime transactionDateTime;
-        try {
-          transactionDateTime = transaction.transactionTimestamp??DateTime.now();
-        } catch (e) {
-          transactionDateTime = DateTime.now();
-        }
-
-        String formattedDate =
-        DateFormat('yyyy-MM-dd').format(transactionDateTime);
-        String formattedTime = DateFormat.jm().format(transactionDateTime);
-
-        IconData getTypeIcon(String type) {
-          return type == 'DEBIT'
-              ? CupertinoIcons.arrow_up_right_square_fill
-              : CupertinoIcons.arrow_down_left_square_fill;
-        }
-
-        return SizedBox(
-          height: MediaQuery.of(context).size.height * 0.67,
-          child: SingleChildScrollView(
-            child: Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0)),
-              borderOnForeground: true,
-              child: Padding(
-                padding: const EdgeInsets.all(6.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Transaction Details",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.blue),
-                    ),
-                    const SizedBox(height: 5),
-                    transactionContainer(
-                      "Transaction To:".toUpperCase(),
-                      transaction.narration ?? '',
-                      Icons.transcribe,
-                    ),
-                    transactionContainer(
-                      "Transaction Type:".toUpperCase(),
-                      (transaction.amount ?? 0.0) < 0 ? 'DEBIT' : 'CREDIT',
-                      getTypeIcon(
-                          (transaction.amount ?? 0.0) < 0 ? 'DEBIT' : 'CREDIT'),
-                    ),
-                    transactionContainer(
-                      "Amount:".toUpperCase(),
-                      "₹ ${(transaction.amount ?? 0.0)}",
-                      Icons.currency_rupee_sharp,
-                    ),
-                    transactionContainer(
-                      "Mode Of Payment:".toUpperCase(),
-                      transaction.modeFromSource ?? 'Unknown',
-                      Icons.payment,
-                    ),
-                    transactionContainer(
-                      "Payment Date:".toUpperCase(),
-                      formattedDate,
-                      Icons.date_range,
-                    ),
-                    transactionContainer(
-                      "Payment Time:".toUpperCase(),
-                      formattedTime,
-                      Icons.date_range,
-                    ),
-                    transactionContainer(
-                      "Current Balance:".toUpperCase(),
-                      "₹ ${transaction.balance}",
-                      Icons.account_balance_wallet,
-                    ),
-                    const SizedBox(height: 5),
-                    Center(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'CLOSE',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 //////we need to put two chart for categories section..if income values & datas needs to show in the two charts as the Income and Expense Datas
 

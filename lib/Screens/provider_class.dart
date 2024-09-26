@@ -1331,10 +1331,33 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void transactionFilter() {
-    _filteredTransactions =
-        reportDataModel.reportData?.banks?[0].accounts?[0].transactions ?? [];
+  void transactionFilter(int bankIndex) {
+    _filteredTransactions = reportDataModel.reportData?.banks?[bankIndex].accounts?[0].transactions ?? [];
+    notifyListeners();
   }
+
+  // void transactionFilter() {
+  //   _filteredTransactions = [];
+  //
+  //
+  //   if (reportDataModel.reportData?.banks != null) {
+  //
+  //     for (var bank in reportDataModel.reportData!.banks!) {
+  //
+  //       if (bank.accounts != null) {
+  //
+  //         for (var account in bank.accounts!) {
+  //
+  //           if (account.transactions != null) {
+  //             _filteredTransactions.addAll(account.transactions!);
+  //           }else{
+  //             showNoTransactionsMessage(message: "No Accounts Available");
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
   void applyCategoryFilter({required String categoryNameFromServer,required bool isFromCategoryIncome}) {
     if(isFromCategoryIncome==true){
@@ -1356,10 +1379,13 @@ class TransactionProvider extends ChangeNotifier {
       accountTransaction.category?.contains(categoryNameFromServer) ?? false)
           .toList();
 
-      print("Filtered list length: ${calenderRangeTransactionDate.length}");
+      if (kDebugMode) {
+        print("Filtered list length: ${calenderRangeTransactionDate.length}");
+      }
 
       notifyListeners();
-    }else{
+    }
+    else{
       selectedCategoryNames = categoryNameFromServer;
 
 
@@ -1376,7 +1402,9 @@ class TransactionProvider extends ChangeNotifier {
       accountTransaction.category?.contains(categoryNameFromServer) ?? false)
           .toList();
 
-      print("Filtered list length: ${calenderRangesTransactionDate.length}");
+      if (kDebugMode) {
+        print("Filtered list length: ${calenderRangesTransactionDate.length}");
+      }
 
       notifyListeners();
     }
@@ -1734,9 +1762,66 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
+  // void calculateAnalyticsForExpense() {
+  //   List<AccountTransaction> transactions =
+  //       reportDataModel.reportData?.banks?.first.accounts?.first.transactions ?? [];
+  //
+  //   if (transactions.isEmpty) {
+  //     notifyListeners();
+  //     showNoTransactionsMessage(
+  //       message: 'Transaction Data is Empty !!',
+  //     );
+  //     return;
+  //   }
+  //
+  //   calenderRangesTransactionDate = transactions.where((AccountTransaction element) {
+  //     return element.date != null &&
+  //         element.date!.year == _dateTime.year &&
+  //         element.date!.month == _dateTime.month &&
+  //         element.category != null &&
+  //         element.amount != null &&
+  //         element.amount! < 0;
+  //   }).toList();
+  //
+  //   if (calenderRangesTransactionDate.isEmpty) {
+  //     showNoTransactionsMessage(
+  //       message: 'EXPENSE Data is not available for the chosen date',
+  //     );
+  //     return;
+  //   }
+  //
+  //   double totalAbsoluteAmounts = calenderRangesTransactionDate.fold(
+  //       0.0,
+  //           (previousValue, element) =>
+  //       previousValue + (element.amount?.toDouble().abs() ?? 0.0));
+  //
+  //   choseTotalAMount = totalAbsoluteAmounts;
+  //
+  //   Map<String, double> expenseByCategory = {};
+  //
+  //   for (var userChosenDataItem in calenderRangesTransactionDate) {
+  //     String category = userChosenDataItem.category ?? '';
+  //     double amount = userChosenDataItem.amount?.toDouble() ?? 0.0;
+  //
+  //     if (amount < 0) {
+  //       double absoluteAmount = amount.abs();
+  //       expenseByCategory.update(category, (value) => value + absoluteAmount,
+  //           ifAbsent: () => absoluteAmount);
+  //     }
+  //   }
+  //
+  //   categoryEntry = expenseByCategory.entries.map((entry) {
+  //     double percentage = (entry.value / totalAbsoluteAmounts) * 100;
+  //     return MapEntry(entry.key, percentage);
+  //   }).where((entry) => entry.value > 0).toList();
+  //
+  //   categoryEntry.sort((a, b) => b.value.compareTo(a.value));
+  //
+  //   notifyListeners();
+  // }
   void calculateAnalyticsForExpense() {
     List<AccountTransaction> transactions =
-        reportDataModel.reportData?.banks?.first.accounts?.first.transactions ?? [];
+        _filteredTransactions;
 
     if (transactions.isEmpty) {
       notifyListeners();
@@ -1746,14 +1831,13 @@ class TransactionProvider extends ChangeNotifier {
       return;
     }
 
-    // Filter transactions based on the selected date and non-null categories
     calenderRangesTransactionDate = transactions.where((AccountTransaction element) {
       return element.date != null &&
           element.date!.year == _dateTime.year &&
           element.date!.month == _dateTime.month &&
           element.category != null &&
           element.amount != null &&
-          element.amount! < 0; // Only consider expenses
+          element.amount! < 0;
     }).toList();
 
     if (calenderRangesTransactionDate.isEmpty) {
@@ -1763,7 +1847,6 @@ class TransactionProvider extends ChangeNotifier {
       return;
     }
 
-    // Calculate the total absolute amount across all transactions
     double totalAbsoluteAmounts = calenderRangesTransactionDate.fold(
         0.0,
             (previousValue, element) =>
@@ -1771,10 +1854,8 @@ class TransactionProvider extends ChangeNotifier {
 
     choseTotalAMount = totalAbsoluteAmounts;
 
-    // Clear previous category entries and create a new map for counting
     Map<String, double> expenseByCategory = {};
 
-    // Process each transaction to calculate the total expense per category
     for (var userChosenDataItem in calenderRangesTransactionDate) {
       String category = userChosenDataItem.category ?? '';
       double amount = userChosenDataItem.amount?.toDouble() ?? 0.0;
@@ -1786,23 +1867,102 @@ class TransactionProvider extends ChangeNotifier {
       }
     }
 
-    // Update categoryEntry with calculated percentages
     categoryEntry = expenseByCategory.entries.map((entry) {
       double percentage = (entry.value / totalAbsoluteAmounts) * 100;
-      print("Expense Category: ${entry.key}, Amount: ${entry.value}, Percentage: $percentage%");
-      return MapEntry(entry.key, percentage); // Store the percentage instead of absolute amount
-    }).toList();
+      return MapEntry(entry.key, percentage);
+    }).where((entry) => entry.value > 0).toList();
 
-    // Sort the entries by percentage for expense
     categoryEntry.sort((a, b) => b.value.compareTo(a.value));
 
     notifyListeners();
   }
 
+  // void calculateAnalyticsForIncome() {
+  //   List<AccountTransaction> transactions =
+  //       reportDataModel.reportData?.banks?.first.accounts?.first.transactions ??
+  //           [];
+  //   if (transactions.isEmpty) {
+  //     notifyListeners();
+  //     showNoTransactionsMessage(
+  //       message: 'Transaction Data is Empty !!',
+  //     );
+  //     return;
+  //   }
+  //
+  //
+  //   calenderRangeTransactionDate = transactions.where((AccountTransaction element) {
+  //     return element.date != null &&
+  //         element.date!.year == _dateTime.year &&
+  //         element.date!.month == _dateTime.month &&
+  //         element.amount != null &&
+  //         element.amount! > 0;
+  //   }).toList();
+  //
+  //
+  //
+  //   if (calenderRangeTransactionDate.isEmpty) {
+  //     showNoTransactionsMessage(
+  //       message: 'INCOME Data is not available for the chosen date',
+  //     );
+  //     return;
+  //   }
+  //
+  //
+  //   double totalAbsoluteAmount = calenderRangeTransactionDate.fold(
+  //       0.0,
+  //           (previousValue, element) =>
+  //       previousValue + (element.amount?.toDouble().abs() ?? 0.0));
+  //
+  //   choosedMonthTotalAmount = totalAbsoluteAmount;
+  //
+  //   countCategory = countCategories(calenderRangeTransactionDate);
+  //
+  //   categoryEntries =
+  //       countCategories(calenderRangeTransactionDate).entries.toList();
+  //
+  //   categoryEntries = categoryEntries.toList()
+  //     ..sort((a, b) {
+  //       final percentageA = a.value.truncate() > 0 ? a.value.truncate() : 0;
+  //       final percentageB = b.value.truncate() > 0 ? b.value.truncate() : 0;
+  //       return percentageB.compareTo(percentageA);
+  //     });
+  //
+  //   Map<String, double> incomeByCategory = {};
+  //   Map<String, double> expenseByCategory = {};
+  //
+  //   for (var userChosenDataItem in calenderRangeTransactionDate) {
+  //     String category = userChosenDataItem.category ?? '';
+  //     double amount = userChosenDataItem.amount?.toDouble() ?? 0.0;
+  //
+  //
+  //     if (amount > 0) {
+  //       incomeByCategory.update(category, (value) => value += amount,
+  //           ifAbsent: () => amount);
+  //
+  //       double percentage = (amount.abs() / totalAbsoluteAmount) * 100;
+  //       updateEntry(category, percentage);
+  //
+  //       print("Income Category: $category, Amount: $amount, Percentage: $percentage%");
+  //     }
+  //
+  //     // else if (amount < 0) {
+  //     //   double absoluteAmount = amount.abs();
+  //     //   expenseByCategory.update(category, (value) => value += absoluteAmount,
+  //     //       ifAbsent: () => absoluteAmount);
+  //     //
+  //     //   double percentage = (absoluteAmount / totalAbsoluteAmount) * 100;
+  //     //   updateEntry(category, percentage);
+  //     //
+  //     //   print("Expense Category: $category, Amount: $absoluteAmount, Percentage: $percentage%");
+  //     // }
+  //   }
+  //
+  //   notifyListeners();
+  // }
+
   void calculateAnalyticsForIncome() {
     List<AccountTransaction> transactions =
-        reportDataModel.reportData?.banks?.first.accounts?.first.transactions ??
-            [];
+        _filteredTransactions;
     if (transactions.isEmpty) {
       notifyListeners();
       showNoTransactionsMessage(
@@ -1811,7 +1971,7 @@ class TransactionProvider extends ChangeNotifier {
       return;
     }
 
-    // Filter transactions based on the selected date and non-null categories
+
     calenderRangeTransactionDate = transactions.where((AccountTransaction element) {
       return element.date != null &&
           element.date!.year == _dateTime.year &&
@@ -1821,7 +1981,7 @@ class TransactionProvider extends ChangeNotifier {
     }).toList();
 
 
-    // If no valid transactions remain, show no transactions message
+
     if (calenderRangeTransactionDate.isEmpty) {
       showNoTransactionsMessage(
         message: 'INCOME Data is not available for the chosen date',
@@ -1829,7 +1989,7 @@ class TransactionProvider extends ChangeNotifier {
       return;
     }
 
-    // Calculate the total absolute amount across all transactions
+
     double totalAbsoluteAmount = calenderRangeTransactionDate.fold(
         0.0,
             (previousValue, element) =>
@@ -1864,7 +2024,9 @@ class TransactionProvider extends ChangeNotifier {
         double percentage = (amount.abs() / totalAbsoluteAmount) * 100;
         updateEntry(category, percentage);
 
-        print("Income Category: $category, Amount: $amount, Percentage: $percentage%");
+        if (kDebugMode) {
+          print("Income Category: $category, Amount: $amount, Percentage: $percentage%");
+        }
       }
 
       // else if (amount < 0) {
@@ -1895,6 +2057,12 @@ class TransactionProvider extends ChangeNotifier {
     "Expense": 0.0,
   };
 
+  // void transactionFilter(int bankIndex) {
+  //   _filteredTransactions = reportDataModel.reportData?.banks?[bankIndex].accounts?[0].transactions ?? [];
+  //   notifyListeners();
+  // }
+
+
   void calculateIncomeExpenseAnalytics() {
     isLoading = true;
 
@@ -1906,13 +2074,11 @@ class TransactionProvider extends ChangeNotifier {
         var transactions = account?.transactions;
 
         if (transactions?.isNotEmpty ?? false) {
-          ///   _dataMap.clear();
 
           transactions?.forEach((transaction) {
             DateTime transactionDate =
-                DateTime.parse(transaction.transactionTimestamp.toString());
-            // double amount =
-            //     double.tryParse(transaction.amount.toString()) ?? 0.0;
+            DateTime.parse(transaction.transactionTimestamp.toString());
+
 
             if (transactionDate.year == _getDate.year &&
                 transactionDate.month == _getDate.month) {
@@ -1926,9 +2092,9 @@ class TransactionProvider extends ChangeNotifier {
               if (choosedMonthTotalAmount > 0) {
                 double total = totalIncome + totalExpense;
                 incomeExpenseMapData['Income'] =
-                    total > 0 ? (totalIncome / total) * 100 : 0;
+                total > 0 ? (totalIncome / total) * 100 : 0;
                 incomeExpenseMapData['Expense'] =
-                    total > 0 ? (totalExpense / total) * 100 : 0;
+                total > 0 ? (totalExpense / total) * 100 : 0;
               } else {
                 incomeExpenseMapData = {
                   'Income': 0.0,
@@ -1963,103 +2129,175 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
+
   void calculateIncomeAndExpense() {
-    final banks = reportDataModel.reportData?.banks;
+    final transactions = _filteredTransactions;
 
-    if (banks != null && banks.isNotEmpty) {
-      final accounts = banks[0].accounts;
+    if (transactions.isNotEmpty) {
+      double totalIncome = 0.0;
+      double totalExpense = 0.0;
+      double totalTransactions = 0.0;
 
-      if (accounts != null && accounts.isNotEmpty) {
-        final transactions = accounts[0].transactions;
+      for (var transaction in transactions) {
+        DateTime? transactionDate = transaction.transactionTimestamp;
 
-        if (transactions != null && transactions.isNotEmpty) {
-          double totalIncome = 0.0;
-          double totalExpense = 0.0;
-          double totalTransactions = 0.0;
+        if (transactionDate != null) {
+          if (transactionDate.year == _getDate.year &&
+              transactionDate.month == _getDate.month) {
+            double amount = (transaction.amount ?? 0).toDouble();
+            totalTransactions += amount.abs();
 
-          for (var transaction in transactions) {
-            DateTime? transactionDate = transaction.transactionTimestamp;
-
-            if (transactionDate != null) {
-              if (transactionDate.year == _getDate.year &&
-                  transactionDate.month == _getDate.month) {
-                double amount = (transaction.amount ?? 0).toDouble();
-                totalTransactions += amount.abs();
-
-                if (amount > 0) {
-                  totalIncome += amount;
-                  if (kDebugMode) {
-                    print("Added income: $amount");
-                  }
-                } else if (amount < 0) {
-                  totalExpense += amount.abs();
-                  if (kDebugMode) {
-                    print("Added expense: ${amount.abs()}");
-                  }
-                }
-              }
-            } else {
+            if (amount > 0) {
+              totalIncome += amount;
               if (kDebugMode) {
-                print("Transaction timestamp is null.");
+                print("Added income: $amount");
+              }
+            } else if (amount < 0) {
+              totalExpense += amount.abs();
+              if (kDebugMode) {
+                print("Added expense: ${amount.abs()}");
               }
             }
           }
-
-          if (totalTransactions > 0) {
-            double incomePercentage = (totalIncome / totalTransactions) * 100;
-            double expensePercentage = (totalExpense / totalTransactions) * 100;
-
-            incomeExpenseMapData = {
-              "Income": incomePercentage,
-              "Expense": expensePercentage,
-            };
-
-            isTransactionAvailable = false;
-          } else {
-            isTransactionAvailable = true;
-          }
-
-          this.totalIncome = totalIncome;
-          this.totalExpense = totalExpense;
-
-          notifyListeners();
-          if (kDebugMode) {
-            print('Total Income for selected month: $totalIncome');
-          }
-          if (kDebugMode) {
-            print('Total Expense for selected month: $totalExpense');
-          }
         } else {
           if (kDebugMode) {
-            print('No transactions found.');
+            print("Transaction timestamp is null.");
           }
-          isTransactionAvailable = true;
         }
+      }
+
+      if (totalTransactions > 0) {
+        double incomePercentage = (totalIncome / totalTransactions) * 100;
+        double expensePercentage = (totalExpense / totalTransactions) * 100;
+
+        incomeExpenseMapData = {
+          "Income": incomePercentage,
+          "Expense": expensePercentage,
+        };
+
+        isTransactionAvailable = false;
       } else {
-        if (kDebugMode) {
-          print('No accounts found.');
-        }
         isTransactionAvailable = true;
+      }
+
+      this.totalIncome = totalIncome;
+      this.totalExpense = totalExpense;
+
+      notifyListeners();
+      if (kDebugMode) {
+        print('Total Income for selected month: $totalIncome');
+        print('Total Expense for selected month: $totalExpense');
       }
     } else {
       if (kDebugMode) {
-        print('No banks found.');
+        print('No transactions found.');
       }
       isTransactionAvailable = true;
     }
   }
 
+
+
+  // void calculateIncomeAndExpense() {
+  //   final banks = reportDataModel.reportData?.banks;
+  //
+  //   if (banks != null && banks.isNotEmpty) {
+  //     final accounts = banks[0].accounts;
+  //
+  //     if (accounts != null && accounts.isNotEmpty) {
+  //       final transactions = accounts[0].transactions;
+  //
+  //       if (transactions != null && transactions.isNotEmpty) {
+  //         double totalIncome = 0.0;
+  //         double totalExpense = 0.0;
+  //         double totalTransactions = 0.0;
+  //
+  //         for (var transaction in transactions) {
+  //           DateTime? transactionDate = transaction.transactionTimestamp;
+  //
+  //           if (transactionDate != null) {
+  //             if (transactionDate.year == _getDate.year &&
+  //                 transactionDate.month == _getDate.month) {
+  //               double amount = (transaction.amount ?? 0).toDouble();
+  //               totalTransactions += amount.abs();
+  //
+  //               if (amount > 0) {
+  //                 totalIncome += amount;
+  //                 if (kDebugMode) {
+  //                   print("Added income: $amount");
+  //                 }
+  //               } else if (amount < 0) {
+  //                 totalExpense += amount.abs();
+  //                 if (kDebugMode) {
+  //                   print("Added expense: ${amount.abs()}");
+  //                 }
+  //               }
+  //             }
+  //           } else {
+  //             if (kDebugMode) {
+  //               print("Transaction timestamp is null.");
+  //             }
+  //           }
+  //         }
+  //
+  //         if (totalTransactions > 0) {
+  //           double incomePercentage = (totalIncome / totalTransactions) * 100;
+  //           double expensePercentage = (totalExpense / totalTransactions) * 100;
+  //
+  //           incomeExpenseMapData = {
+  //             "Income": incomePercentage,
+  //             "Expense": expensePercentage,
+  //           };
+  //
+  //           isTransactionAvailable = false;
+  //         } else {
+  //           isTransactionAvailable = true;
+  //         }
+  //
+  //         this.totalIncome = totalIncome;
+  //         this.totalExpense = totalExpense;
+  //
+  //         notifyListeners();
+  //         if (kDebugMode) {
+  //           print('Total Income for selected month: $totalIncome');
+  //         }
+  //         if (kDebugMode) {
+  //           print('Total Expense for selected month: $totalExpense');
+  //         }
+  //       } else {
+  //         if (kDebugMode) {
+  //           print('No transactions found.');
+  //         }
+  //         isTransactionAvailable = true;
+  //       }
+  //     } else {
+  //       if (kDebugMode) {
+  //         print('No accounts found.');
+  //       }
+  //       isTransactionAvailable = true;
+  //     }
+  //   } else {
+  //     if (kDebugMode) {
+  //       print('No banks found.');
+  //     }
+  //     isTransactionAvailable = true;
+  //   }
+  // }
+
   void setIncomeExpense(DateTime newDateTime) {
     _getDate = newDateTime;
-    calculateIncomeExpenseAnalytics();
+  //  calculateIncomeExpenseAnalytics();
     calculateIncomeAndExpense();
 
     notifyListeners();
   }
 
+
+
   void setCategoryDatas(DateTime newDateTime) {
     _dateTime = newDateTime;
     calculateAnalyticsForIncome();
+
 
 
     notifyListeners();
@@ -2139,7 +2377,7 @@ if(isFromIncome==true){
   if (index < 0 || index >= colors.length) {
     index = index % colors.length;
   }
-  print("colorscolorscolors====${colors[index]}");
+
   return colors[index];
 }else{
   int index = categoryEntry.indexOf(entry);
@@ -2147,13 +2385,12 @@ if(isFromIncome==true){
   if (index < 0 || index >= colors.length) {
     index = index % colors.length;
   }
-  if (kDebugMode) {
-    print("colorscolorscolors====${colors[index]}");
-  }
+
   return colors[index];
 }
 
   }
+
   String formatCategoryName(String category) {
     if (category.startsWith('Transfer to')) {
       return category.replaceFirst('Transfer to', '').trim();
@@ -2249,14 +2486,20 @@ if(isFromIncome==true){
     selectedValues.clear();
     dateFromController.clear();
     dateToController.clear();
-    transactionFilter();
+   //transactionFilter(bankIndex);
     notifyListeners();
   }
 
   Map<String, Icon> categoryIcons = {
     'UPI':
         const Icon(Icons.credit_card_off_sharp, size: 35, color: Colors.blue),
-    'Transfer to': const Icon(CupertinoIcons.paperplane_fill,
+    'Transfer in': const Icon(CupertinoIcons.arrow_down_left_square_fill,
+        size: 35, color: Colors.green),
+    'Transfer out': const Icon(CupertinoIcons.arrow_down_right_square_fill,
+        size: 35, color: Colors.green),
+    'Transfer to': const Icon(CupertinoIcons.arrow_down_right_square_fill,
+        size: 35, color: Colors.green),
+    'Transfer from': const Icon(CupertinoIcons.arrow_down_left_square_fill,
         size: 35, color: Colors.green),
     'Investment Expense':
         const Icon(Icons.currency_rupee_sharp, size: 35, color: Colors.orange),
@@ -2280,9 +2523,23 @@ if(isFromIncome==true){
       size: 35,
       color: Colors.brown,
     ),
-    'Others': const Icon(CupertinoIcons.arrow_down_left_square_fill,
-        size: 35, color: Color.fromRGBO(128, 155, 186, 1)),
+    'Others': const Icon(CupertinoIcons.slowmo,
+        size: 35, color: Colors.black),
   };
+
+  Icon? getLeadingIcon(String? category, Map<String, Icon> categoryIcons) {
+
+    if (category != null) {
+
+      for (var key in categoryIcons.keys) {
+        if (category.toLowerCase().contains(key.toLowerCase())) {
+          return categoryIcons[key];
+        }
+      }
+    }
+    // Return the 'Others' icon if no matches found
+    return categoryIcons['Others'];
+  }
 
   Future<String?> generateUrl(String phoneNumber) async {
     isLoading = true;

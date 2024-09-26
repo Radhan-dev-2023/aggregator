@@ -52,7 +52,7 @@ class CardWidget extends StatefulWidget {
 }
 
 class _CardWidgetState extends State<CardWidget> {
-  bool isVisible = false; // State to track visibility
+  bool isVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +100,6 @@ class _CardWidgetState extends State<CardWidget> {
           ),
           const SizedBox(height: 1),
           Row(
-            //mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -116,13 +115,13 @@ class _CardWidgetState extends State<CardWidget> {
                       });
                     },
                   ),
-                  const SizedBox(width: 8),
                   if (isVisible)
                     Text(
-                      widget.cardHolder,
+                      "₹ ${widget.cardHolder}",
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold
                       ),
                     ),
                 ],
